@@ -21,10 +21,8 @@ router.get('/system/sync-metrics', async (req, res) => {
         const pool = require('../db');
         
         // SQLite metrics
-        const pendingCount = queueRepository.db.prepare(`SELECT COUNT(*) as count FROM sync_queue WHERE status = 'PENDING'`).get().count;
-        const failedCount = queueRepository.db.prepare(`SELECT COUNT(*) as count FROM sync_queue WHERE status = 'FAILED'`).get().count;
-        const retryAvgRes = queueRepository.db.prepare(`SELECT AVG(retry_count) as avg FROM sync_queue`).get();
-        const avgRetry = retryAvgRes.avg ? Math.round(retryAvgRes.avg * 10) / 10 : 0;
+        const queueStats = queueRepository.getQueueStats();
+        const avgRetry = queueStats.pending > 0 ? Math.round((queueStats.retries / queueStats.pending) * 10) / 10 : 0;
         
         // PG metrics
         const pgLogs = await pool.query(`
@@ -36,7 +34,7 @@ router.get('/system/sync-metrics', async (req, res) => {
         `);
         const totals = pgLogs.rows[0];
         const accepted = parseInt(totals.total_accepted || 0);
-        const failedLogs = parseInt(totals.total_failed || 0);
+        const failedLogs = parseInt(totals.total_failed || 0); // Note: These are cloud-side API validation failures (if any), not queue failures.
         const duplicates = parseInt(totals.total_duplicates || 0);
 
         const historyQuery = await pool.query(`
@@ -49,14 +47,15 @@ router.get('/system/sync-metrics', async (req, res) => {
         
         res.status(200).json({
             mode: connectivityService.getStatus().status,
-            pendingQueue: pendingCount,
-            failedQueue: failedCount,
+            pendingQueue: queueStats.pending,
+            totalRetries: queueStats.retries,
+            oldestPendingRecord: queueStats.oldestPendingRecord,
             syncedRecords: accepted,
-            failedRecords: failedLogs,
+            failedRecords: failedLogs, // Cloud rejected count
             avgRetry,
             successRate,
             avgSyncTime: "1.2s", // Simulated since exact ms not tracked yet
-            maxQueueSize: pendingCount > 100 ? pendingCount : 100, // Derived
+            maxQueueSize: queueStats.maxQueue,
             dataLoss: "0%",
             history
         });

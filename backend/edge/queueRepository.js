@@ -20,12 +20,12 @@ class QueueRepository {
     }
 
     getBatch(limit = 100) {
-        // Fetch up to 100 items that are either PENDING, or FAILED but past their exponential backoff retry window.
-        // Backoff formula: wait retry_count * retry_count * 10 seconds.
+        // Fetch up to 100 items that are PENDING and past their backoff window.
+        // Backoff formula: MIN(retry_count * retry_count * 10, 300) seconds. Max delay 5 mins.
         const stmt = this.db.prepare(`
             SELECT * FROM sync_queue 
             WHERE status = 'PENDING' 
-               OR (status = 'FAILED' AND strftime('%s', 'now') - strftime('%s', last_retry) > retry_count * retry_count * 10)
+              AND (last_retry IS NULL OR strftime('%s', 'now') - strftime('%s', last_retry) > MIN(retry_count * retry_count * 10, 300))
             ORDER BY created_at ASC
             LIMIT ?
         `);
@@ -33,13 +33,10 @@ class QueueRepository {
     }
 
     markSuccess(id, entityName, entityId) {
-        // Atomic transaction: remove from queue and update source table
         const successTransaction = this.db.transaction(() => {
             const deleteStmt = this.db.prepare(`DELETE FROM sync_queue WHERE id = ?`);
             deleteStmt.run(id);
 
-            // Update the source table to mark as synced
-            // We use simple string concatenation for the table name because it's controlled internally (e.g., 'sensor_data').
             const updateStmt = this.db.prepare(`UPDATE ${entityName} SET is_synced = 1 WHERE id = ?`);
             updateStmt.run(entityId);
         });
@@ -48,9 +45,10 @@ class QueueRepository {
     }
 
     markFailed(id) {
+        // Keep status PENDING, just increment retry_count
         const stmt = this.db.prepare(`
             UPDATE sync_queue 
-            SET status = 'FAILED', 
+            SET status = 'PENDING', 
                 retry_count = retry_count + 1, 
                 last_retry = CURRENT_TIMESTAMP 
             WHERE id = ?
@@ -60,29 +58,23 @@ class QueueRepository {
 
     getQueueStats() {
         const totalStmt = this.db.prepare(`SELECT COUNT(*) AS total FROM sync_queue`);
-        const pendingStmt = this.db.prepare(`SELECT COUNT(*) AS pending FROM sync_queue WHERE status = 'PENDING'`);
-        const failedStmt = this.db.prepare(`SELECT COUNT(*) AS failed, SUM(retry_count) AS retries FROM sync_queue WHERE status = 'FAILED'`);
+        const pendingStmt = this.db.prepare(`SELECT COUNT(*) AS pending, SUM(retry_count) AS retries, MIN(created_at) as oldest FROM sync_queue WHERE status = 'PENDING'`);
         
         const total = totalStmt.get().total || 0;
-        const pending = pendingStmt.get().pending || 0;
-        const failedRow = failedStmt.get();
-        const failed = failedRow.failed || 0;
-        const retries = failedRow.retries || 0;
+        const pendingRow = pendingStmt.get();
+        const pending = pendingRow.pending || 0;
+        const retries = pendingRow.retries || 0;
+        const oldest = pendingRow.oldest || null;
 
         this.maxQueue = Math.max(this.maxQueue, total);
 
         return {
             total: total,
             pending: pending,
-            failed: failed,
             retries: retries,
+            oldestPendingRecord: oldest,
             maxQueue: this.maxQueue
         };
-    }
-    
-    deleteFailedItem(id) {
-        const stmt = this.db.prepare(`DELETE FROM sync_queue WHERE id = ?`);
-        stmt.run(id);
     }
 }
 

@@ -102,7 +102,9 @@ router.get('/network', async (req, res) => {
             
             // Phase 4 Metrics
             pendingQueue: queueStats.pending,
-            failedQueue: queueStats.failed,
+            totalRetries: queueStats.retries,
+            averageRetryCount: queueStats.pending > 0 ? (queueStats.retries / queueStats.pending).toFixed(2) : 0,
+            oldestPendingRecord: queueStats.oldestPendingRecord,
             maximumQueue: queueStats.maxQueue,
             successRate: syncMetrics.successRate,
             averageSyncTime: syncMetrics.averageSyncTime,

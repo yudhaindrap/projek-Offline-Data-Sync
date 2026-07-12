@@ -80,20 +80,11 @@ class SyncWorker {
                 metricsService.record('sync_throughput_rps', throughput);
             } else {
                 this.failureCount += batch.length;
-                // Mark failed or drop if retries exceeded
-                let dropped = 0;
+                // Mark failed for indefinite retry
                 batch.forEach(item => {
-                    // Item already has retry_count fetched from DB (if getBatch returned it)
-                    // Wait, getBatch does return all columns, including retry_count.
-                    if (item.retry_count >= 5) {
-                        queueRepository.deleteFailedItem(item.id);
-                        this.dataLossCount++;
-                        dropped++;
-                    } else {
-                        queueRepository.markFailed(item.id);
-                    }
+                    queueRepository.markFailed(item.id);
                 });
-                console.log(`⚠️ SyncWorker: Sync failed. Marked ${batch.length - dropped} items for retry. Dropped ${dropped} items (Data Loss).`);
+                console.log(`⚠️ SyncWorker: Sync failed. Marked ${batch.length} items for retry (Data Loss: 0).`);
                 networkSimulatorService.recordSyncMetrics(durationMs, 0, batch.length);
             }
 

@@ -109,7 +109,8 @@ class ExperimentManager {
                 average_sync_time_ms: syncMetrics.averageSyncTime,
                 data_loss: syncMetrics.dataLoss,
                 pending_queue: queueStats.pending,
-                failed_queue: queueStats.failed,
+                total_retries: queueStats.retries,
+                oldest_pending_record: queueStats.oldestPendingRecord,
                 maximum_queue: queueStats.maxQueue
             },
             mqtt_metrics: { average_latency_ms: avgMqtt },
