@@ -1,0 +1,21 @@
+# Abaikan backend Python
+backend-py/
+
+# Database
+sense-maggot-edge.db
+*.db
+
+# Node.js
+node_modules/
+**/node_modules/
+
+# Environment
+.env
+.env.*
+
+# Build
+dist/
+build/
+
+# Logs
+*.log
