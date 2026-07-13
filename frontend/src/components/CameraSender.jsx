@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
+import { useWebRTCLatency } from '../hooks/useLatencyMetrics';
 
 const BACKEND_IP = "192.168.198.1"; // ⚠️ GANTI DENGAN IP LAPTOPMU
 
@@ -9,6 +10,9 @@ export default function CameraSender() {
   const socket = useRef(null);
   const streamRef = useRef(null);
   const [status, setStatus] = useState("Siap");
+
+  // Mount latency background hook
+  useWebRTCLatency(peerConnection.current);
 
   useEffect(() => {
     return () => {

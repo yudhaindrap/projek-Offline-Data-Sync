@@ -44,6 +44,7 @@ class SyncService {
 
             for (const item of edgeData) {
                 try {
+                    await client.query('SAVEPOINT item_savepoint');
                     const { entity_name, payload } = item;
                     // Payload arrives as string from Edge SQLite, need to parse
                     const data = typeof payload === 'string' ? JSON.parse(payload) : payload;
@@ -60,6 +61,7 @@ class SyncService {
                     if (!allowedTables.includes(entity_name)) {
                         console.warn(`⚠️ Skipped unknown entity: ${entity_name}`);
                         failed++;
+                        await client.query('ROLLBACK TO SAVEPOINT item_savepoint');
                         continue;
                     }
 
@@ -76,8 +78,10 @@ class SyncService {
                     } else {
                         duplicates++;
                     }
+                    await client.query('RELEASE SAVEPOINT item_savepoint');
                 } catch (itemErr) {
-                    console.error("Error processing individual item in batch:", itemErr);
+                    await client.query('ROLLBACK TO SAVEPOINT item_savepoint');
+                    console.error("Error processing individual item in batch:", itemErr.message);
                     failed++;
                 }
             }

@@ -23,6 +23,9 @@ export default function Growth() {
 
   useEffect(() => {
     if (isStreaming) {
+      // Konek ke Node.js Backend untuk metrik
+      const nodeSocket = io();
+
       // 1. Konek ke Server Python AI (Port 5002)
       socket.current = io(`http://${BACKEND_IP}:5002`);
 
@@ -37,6 +40,19 @@ export default function Growth() {
       // 3. Terima frame gambar ber-box dari YOLOv8
       socket.current.on("video-frame", (imageSrc) => {
         setAiVideo(imageSrc);
+      });
+
+      // 4. Terima metrik WebRTC Glass-to-Glass Latency
+      socket.current.on("webrtc-latency-data", (data) => {
+        const decode_time = Date.now();
+        requestAnimationFrame(() => {
+          const display_time = Date.now();
+          nodeSocket.emit('webrtc_latency_pong', {
+            ...data,
+            decode_time,
+            display_time
+          });
+        });
       });
 
     } else {

@@ -14,6 +14,8 @@ client.on('connect', () => {
 
     setInterval(() => {
         const dataSensor = {
+            msg_id: require('crypto').randomUUID(),
+            sent_at: Date.now(),
             node_id: `ESP32_DEV_${boxCounter}`,
             lantai: boxCounter,
             suhu: parseFloat((25 + Math.random() * 5).toFixed(2)),

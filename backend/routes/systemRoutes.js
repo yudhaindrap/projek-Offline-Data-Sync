@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const connectivityService = require('../edge/connectivityService');
 const syncController = require('../cloud/syncController');
+const crypto = require('crypto');
+const pool = require('../db');
 
 // Cloud Health Check Endpoint
 router.get('/health', (req, res) => {
@@ -97,5 +99,42 @@ router.get('/system/sync-metrics', async (req, res) => {
 
 // Cloud Sync Endpoint
 router.post('/sync', syncController.handleSyncRequest);
+
+// POST /api/metrics/latency
+router.post('/metrics/latency', async (req, res) => {
+    // Jalankan secara asynchronous tanpa menge-block thread UI
+    const { type, latency_ms } = req.body;
+
+    // Validasi sederhana tipe data
+    if (!type || typeof latency_ms !== 'number') {
+        return res.status(400).json({ error: 'Format payload tidak valid' });
+    }
+
+    try {
+        const logId = crypto.randomUUID();
+
+        if (type === 'websocket') {
+            await pool.query(
+                `INSERT INTO websocket_latency_logs (id, e2e_latency_ms, recorded_at) 
+                 VALUES ($1, $2, NOW())`,
+                [logId, Math.round(latency_ms)]
+            );
+        } else if (type === 'webrtc') {
+            await pool.query(
+                `INSERT INTO webrtc_latency_logs (id, latency_ms, recorded_at) 
+                 VALUES ($1, $2, NOW())`,
+                [logId, Math.round(latency_ms)]
+            );
+        } else {
+            return res.status(400).json({ error: 'Tipe protokol tidak didukung' });
+        }
+
+        // Return secara instan
+        return res.status(200).json({ message: 'Metrik latensi berhasil disimpan' });
+    } catch (err) {
+        console.error('Database Error (Latency Metrics):', err.message);
+        return res.status(500).json({ error: 'Terjadi kesalahan sistem' });
+    }
+});
 
 module.exports = router;

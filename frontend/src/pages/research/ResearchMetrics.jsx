@@ -12,8 +12,18 @@ export default function ResearchMetrics() {
   useEffect(() => {
     // Determine WS Latency
     const socket = io();
-    socket.on('latency_ping', (timestamp) => {
-      socket.emit('latency_pong', timestamp);
+    socket.on('latency_ping', (data) => {
+      if (data && data.server_send_at) {
+        const browser_receive_at = Date.now();
+        requestAnimationFrame(() => {
+          const browser_render_at = Date.now();
+          socket.emit('latency_pong', {
+            server_send_at: data.server_send_at,
+            browser_receive_at,
+            browser_render_at
+          });
+        });
+      }
     });
 
     const fetchActiveExperiment = async () => {
@@ -140,7 +150,7 @@ export default function ResearchMetrics() {
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
           <h3 className="text-md font-bold text-slate-200 mb-4 flex items-center gap-2"><Network size={16}/> Communication Latency (ms)</h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
               <LineChart data={metrics}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis dataKey="timeLabel" stroke="#64748b" fontSize={12} tickMargin={10} />
@@ -149,6 +159,7 @@ export default function ResearchMetrics() {
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }}/>
                 <Line type="monotone" dataKey="mqtt_latency_ms" name="MQTT Latency" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} />
                 <Line type="monotone" dataKey="ws_latency_ms" name="WebSocket Latency" stroke="#a855f7" strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="webrtc_latency_ms" name="WebRTC Latency" stroke="#ef4444" strokeWidth={2} dot={false} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -158,7 +169,7 @@ export default function ResearchMetrics() {
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
           <h3 className="text-md font-bold text-slate-200 mb-4 flex items-center gap-2"><Clock size={16}/> Sync Performance</h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
               <LineChart data={metrics}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis dataKey="timeLabel" stroke="#64748b" fontSize={12} tickMargin={10} />
@@ -177,7 +188,7 @@ export default function ResearchMetrics() {
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
           <h3 className="text-md font-bold text-slate-200 mb-4 flex items-center gap-2"><Cpu size={16}/> System Utilization</h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
               <LineChart data={metrics}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis dataKey="timeLabel" stroke="#64748b" fontSize={12} tickMargin={10} />
@@ -196,7 +207,7 @@ export default function ResearchMetrics() {
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
           <h3 className="text-md font-bold text-slate-200 mb-4 flex items-center gap-2"><HardDrive size={16}/> Storage & Database Size</h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
               <LineChart data={metrics}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis dataKey="timeLabel" stroke="#64748b" fontSize={12} tickMargin={10} />
@@ -233,6 +244,7 @@ export default function ResearchMetrics() {
             <tbody>
               {renderStatRow("MQTT Latency (ms)", "mqtt_latency_ms")}
               {renderStatRow("WebSocket Latency (ms)", "ws_latency_ms")}
+              {renderStatRow("WebRTC Latency (ms)", "webrtc_latency_ms")}
               {renderStatRow("Sync Duration (ms)", "sync_duration_ms")}
               {renderStatRow("Sync Throughput (rps)", "sync_throughput_rps")}
               {renderStatRow("Queue Size", "queue_size")}

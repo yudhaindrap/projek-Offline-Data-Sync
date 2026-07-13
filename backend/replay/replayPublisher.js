@@ -91,7 +91,7 @@ class ReplayPublisher {
             if (record.fan_exhaust_pwm !== undefined) sensorData.fan_exhaust_pwm = parseInt(record.fan_exhaust_pwm);
             if (record.heater_status !== undefined) sensorData.heater_status = record.heater_status.toLowerCase() === 'true' || record.heater_status === '1';
 
-            if (!offlineMode && this.client) {
+            if (this.client) {
                 if (config.useJitter !== false) {
                     const mqttDelay = Math.floor(Math.random() * (100 - 20 + 1) + 20); // 20-100ms
                     setTimeout(() => {

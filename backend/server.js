@@ -95,9 +95,47 @@ app.use('/api', systemRoutes); // Register /api/health and /api/system/connectiv
 io.on('connection', (socket) => {
     console.log(`📡 Klien terhubung: ${socket.id}`);
 
+    // --- KODE MODIFIKASI: PING-PONG HANDLER ---
+    socket.on('ping_latency', (data) => {
+        // Pantulkan kembali payload secara langsung (berisi client_time)
+        socket.emit('pong_latency', data);
+    });
+    // ------------------------------------------
+
     // WS Latency Tracking
-    socket.on('latency_pong', (timestamp) => {
-        metricsService.record('ws_latency_ms', Date.now() - timestamp);
+    socket.on('latency_pong', (data) => {
+        // data contains: server_send_at, browser_receive_at, browser_render_at
+        if (data && data.server_send_at && data.browser_receive_at) {
+            const now = Date.now();
+            const broadcast_latency_ms = data.browser_receive_at - data.server_send_at;
+            const render_latency_ms = data.browser_render_at ? (data.browser_render_at - data.browser_receive_at) : 0;
+            const e2e_latency_ms = (data.browser_render_at || data.browser_receive_at) - data.server_send_at;
+            
+            metricsService.record('ws_latency_ms', e2e_latency_ms); // Average
+            metricsService.record('ws_packets', {
+                server_send_at: data.server_send_at,
+                browser_receive_at: data.browser_receive_at,
+                browser_render_at: data.browser_render_at || data.browser_receive_at,
+                broadcast_latency_ms,
+                render_latency_ms,
+                e2e_latency_ms
+            });
+        }
+    });
+
+    // WebRTC Latency Tracking
+    socket.on('webrtc_latency_pong', (data) => {
+        if (data && data.capture_time && data.display_time) {
+            const e2e_latency = data.display_time - data.capture_time;
+            metricsService.record('webrtc_latency_ms', e2e_latency);
+            metricsService.record('webrtc_packets', {
+                ...data,
+                latency_ms: e2e_latency,
+                fps: data.fps || 0,
+                bitrate: data.bitrate || 0,
+                jitter: data.jitter || 0
+            });
+        }
     });
 
     socket.on('disconnect', () => {
@@ -107,7 +145,7 @@ io.on('connection', (socket) => {
 
 // Ping interval for WS latency
 setInterval(() => {
-    io.emit('latency_ping', Date.now());
+    io.emit('latency_ping', { server_send_at: Date.now() });
 }, 2000);
 
 /* =========================

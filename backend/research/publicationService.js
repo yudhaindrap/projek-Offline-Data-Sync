@@ -45,9 +45,13 @@ class PublicationService {
         if (expRes.rows.length === 0) throw new Error("Experiment not found");
         const exp = expRes.rows[0];
 
-        // 2. Fetch Performance Metrics Statistics
-        const mqttStats = await this.getStatistics(experimentId, 'performance_metrics', 'mqtt_latency_ms');
-        const wsStats = await this.getStatistics(experimentId, 'performance_metrics', 'ws_latency_ms');
+        // 2. Fetch Performance Metrics Statistics from Granular Logs
+        const mqttStats = await this.getStatistics(experimentId, 'mqtt_latency_logs', 'latency_ms');
+        const wsStats = await this.getStatistics(experimentId, 'websocket_latency_logs', 'e2e_latency_ms');
+        const webrtcStats = await this.getStatistics(experimentId, 'webrtc_latency_logs', 'latency_ms');
+        
+        // Sync and Network stats are stored as JSONB in experiment_metrics_log or performance_metrics. 
+        // For sync duration and throughput, performance_metrics still has the 5s aggregates.
         const syncStats = await this.getStatistics(experimentId, 'performance_metrics', 'sync_duration_ms');
         const throughputStats = await this.getStatistics(experimentId, 'performance_metrics', 'sync_throughput_rps');
         const queueStats = await this.getStatistics(experimentId, 'performance_metrics', 'queue_size');
@@ -78,6 +82,7 @@ class PublicationService {
             performance: {
                 mqtt_latency: mqttStats,
                 ws_latency: wsStats,
+                webrtc_latency: webrtcStats,
                 sync_duration: syncStats,
                 sync_throughput: throughputStats,
                 queue_growth: queueStats

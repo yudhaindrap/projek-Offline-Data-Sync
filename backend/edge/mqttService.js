@@ -26,8 +26,30 @@ function initMQTT(io, pgPool) {
             console.log("📩 Data MQTT diterima di Edge Layer:", data);
 
             if (data.sent_at) {
-                const latency = Date.now() - data.sent_at;
+                const now = Date.now();
+                const latency = now - data.sent_at;
+                
+                // --- KODE MODIFIKASI: INSERT LATENSI MQTT MURNI ---
+                try {
+                    const logId = crypto.randomUUID();
+                    const msgId = data.msg_id || crypto.randomUUID();
+                    const pool = require('../db');
+                    pool.query(
+                        `INSERT INTO mqtt_latency_logs (id, msg_id, latency_ms, recorded_at) VALUES ($1, $2, $3, NOW())`,
+                        [logId, msgId, latency]
+                    );
+                } catch (err) {
+                    console.error("❌ Gagal insert log MQTT:", err.message);
+                }
+                // --------------------------------------------------
+
                 metricsService.record('mqtt_latency_ms', latency);
+                metricsService.record('mqtt_packets', {
+                    msg_id: data.msg_id || crypto.randomUUID(),
+                    sent_at: data.sent_at,
+                    backend_received_at: now,
+                    latency_ms: latency
+                });
             }
 
             let boxId = data.box_id;

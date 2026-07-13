@@ -142,7 +142,7 @@ export default function Monitoring() {
           </div>
         </div>
         <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">

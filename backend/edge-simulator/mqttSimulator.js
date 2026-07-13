@@ -48,7 +48,7 @@ class MqttSimulator {
         if (this.isRunning) this.stop();
         this.config = { ...this.config, ...configOverrides };
         this.isRunning = true;
-        
+
         if (!this.client) this.init();
 
         const boxes = await this.getActiveBoxes(this.config.boxCount);
@@ -84,12 +84,13 @@ class MqttSimulator {
     async simulateBoxData(box) {
         // 1. Sensor Data
         const sensorData = generateSensorData(box.room_number);
+        sensorData.msg_id = require('crypto').randomUUID();
         sensorData.sent_at = Date.now(); // Inject sent_at for latency tracking
-        
+
         if (!this.config.offlineMode) {
             this.client.publish(this.topic, JSON.stringify(sensorData));
         }
-        
+
         // Let mqttService backend handle sensor insertion natively when online,
         // but if offline, we would directly insert to localDb. However, mqttService does it if we publish.
         // If offlineMode is true, we should write it directly to offlineStorageSimulator.

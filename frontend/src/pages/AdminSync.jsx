@@ -281,7 +281,7 @@ const AdminSync = () => {
                         <h3 className="text-lg font-bold text-slate-800">Sync History (Throughput)</h3>
                     </div>
                     <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
                             <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis dataKey="time" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} dy={10} />
@@ -305,7 +305,7 @@ const AdminSync = () => {
                         <h3 className="text-lg font-bold text-slate-800">Batch Transmission Size</h3>
                     </div>
                     <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
                             <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                 <XAxis dataKey="time" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} dy={10} />

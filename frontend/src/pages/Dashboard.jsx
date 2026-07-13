@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import io from 'socket.io-client';
+import { useWebSocketLatency } from '../hooks/useLatencyMetrics';
 import axios from 'axios';
 import {
     AlertCircle,
@@ -20,6 +21,8 @@ export default function Dashboard() {
     });
 
     const [realtimeBox, setRealtimeBox] = useState(null);
+    useWebSocketLatency(socket);
+
     const activeBoxIndexRef = useRef(0);
     // Dynamic box IDs fetched from /api/boxes — replaces hardcoded [1,2,3]
     const boxIdsRef = useRef([]);

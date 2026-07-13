@@ -207,7 +207,7 @@ export default function ResearchDatasetExport() {
               
               <div className="h-64">
                 <h4 className="text-center text-sm font-bold text-slate-400 mb-2">Network Latency Over Time</h4>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
                   <LineChart data={dataset.performance_metrics}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                     <XAxis dataKey="timeLabel" stroke="#94a3b8" fontSize={10} />
@@ -222,7 +222,7 @@ export default function ResearchDatasetExport() {
 
               <div className="h-64">
                 <h4 className="text-center text-sm font-bold text-slate-400 mb-2">Sync Performance & DB Load</h4>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
                   <LineChart data={dataset.performance_metrics}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                     <XAxis dataKey="timeLabel" stroke="#94a3b8" fontSize={10} />

@@ -138,7 +138,7 @@ export default function ResearchComparison() {
             <BarChart3 size={16} className="text-blue-500" /> Environment Profiles
           </h3>
           <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
               <BarChart data={chartData} margin={{ top: 5, right: 30, left: -20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                 <XAxis dataKey="name" stroke="#475569" fontSize={11} tickMargin={10} />
@@ -158,7 +158,7 @@ export default function ResearchComparison() {
             <Activity size={16} className="text-emerald-500" /> Network Latency
           </h3>
           <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
               <BarChart data={chartData} margin={{ top: 5, right: 30, left: -20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                 <XAxis dataKey="name" stroke="#475569" fontSize={11} tickMargin={10} />
@@ -178,7 +178,7 @@ export default function ResearchComparison() {
             <BarChart3 size={16} className="text-purple-500" /> Synchronization & Event Pressure
           </h3>
           <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
               <BarChart data={chartData} margin={{ top: 5, right: 30, left: -20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                 <XAxis dataKey="name" stroke="#475569" fontSize={11} tickMargin={10} />
