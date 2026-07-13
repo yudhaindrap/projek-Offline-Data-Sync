@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 
-const DATASETS_DIR = path.join(__dirname, 'datasets');
+const DATASETS_DIR = path.join(__dirname, 'datasets', 'raw');
 
 /**
  * Scans a single CSV file and extracts metadata
@@ -24,6 +24,7 @@ async function scanCsvFile(filePath, filename) {
         let isFirstLine = true;
         let lastLine = null;
         let firstDataLine = null;
+        let delimiter = ',';
 
         const rl = readline.createInterface({
             input: fs.createReadStream(filePath),
@@ -34,8 +35,11 @@ async function scanCsvFile(filePath, filename) {
             if (!line.trim()) return;
 
             if (isFirstLine) {
+                if (line.includes(';')) {
+                    delimiter = ';';
+                }
                 // Parse headers
-                const headers = line.split(',').map(h => h.trim());
+                const headers = line.split(delimiter).map(h => h.trim());
                 metadata.availableColumns = headers;
                 isFirstLine = false;
             } else {
@@ -50,13 +54,13 @@ async function scanCsvFile(filePath, filename) {
         rl.on('close', () => {
             if (metadata.totalRecords > 0 && firstDataLine && lastLine) {
                 try {
-                    // Try to extract timestamp from the first column assuming it's usually timestamp/time
+                    // Try to extract timestamp from the first column assuming it's usually timestamp/time/recorded_at
                     const headers = metadata.availableColumns;
-                    const timestampIdx = headers.findIndex(h => h.toLowerCase().includes('timestamp') || h.toLowerCase() === 'time');
+                    const timestampIdx = headers.findIndex(h => h.toLowerCase().includes('timestamp') || h.toLowerCase() === 'time' || h.toLowerCase() === 'recorded_at');
                     
                     if (timestampIdx !== -1) {
-                        const firstParts = firstDataLine.split(',');
-                        const lastParts = lastLine.split(',');
+                        const firstParts = firstDataLine.split(delimiter);
+                        const lastParts = lastLine.split(delimiter);
                         
                         let startStr = firstParts[timestampIdx].trim();
                         let endStr = lastParts[timestampIdx].trim();

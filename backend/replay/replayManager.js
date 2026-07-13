@@ -36,7 +36,7 @@ class ReplayManager {
         this.engine = new DatasetReplay(currentDataset.id, this.speed);
         
         this.engine.on('record', (record) => {
-            replayPublisher.publishRecord(record, this.activeBoxes, this.config.offlineMode);
+            replayPublisher.publishRecord(record, this.activeBoxes, this.config);
             
             // Calculate progress
             if (currentDataset.totalRecords > 0) {

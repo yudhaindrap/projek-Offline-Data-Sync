@@ -44,16 +44,36 @@ class ReplayPublisher {
     /**
      * Publishes a replayed record to all active boxes
      */
-    async publishRecord(record, boxes, offlineMode = false) {
+    async publishRecord(record, boxes, config = {}) {
+        const offlineMode = config.offlineMode || false;
+        const useNoise = config.useNoise !== false; // default true for realistic replay
+        
         if (!this.isConnected && !offlineMode) {
             this.init();
         }
 
         boxes.forEach((box) => {
-            const temperature = parseFloat(record.suhu || record.temperature || 30.0);
-            const humidityAir = parseFloat(record.kelembapan_udara || record.humidity_air || record.humidity || 70.0);
-            const humidityMedia = parseFloat(record.kelembapan_media || record.humidity_media || 50.0);
-            const timestamp = record.timestamp ? (isNaN(record.timestamp) ? new Date(record.timestamp).getTime() : parseInt(record.timestamp)) : Date.now();
+            let temperature = parseFloat(record.temp_air_in || record.suhu || record.temperature || 30.0);
+            let humidityAir = parseFloat(record.rh_in || record.kelembapan_udara || record.humidity_air || record.humidity || 70.0);
+            
+            let humidityMedia = parseFloat(record.kelembapan_media || record.humidity_media || 50.0);
+            if (record.soil_raw) {
+                const soil = parseFloat(record.soil_raw);
+                humidityMedia = Math.max(0, Math.min(100, 100 - (soil / 4095 * 100)));
+            }
+
+            // Simulate Sensor Noise
+            if (useNoise) {
+                temperature += (Math.random() * 0.4 - 0.2);
+                humidityAir += (Math.random() * 2.0 - 1.0);
+                humidityMedia += (Math.random() * 2.0 - 1.0);
+                
+                // Clamp limits
+                humidityAir = Math.max(0, Math.min(100, humidityAir));
+                humidityMedia = Math.max(0, Math.min(100, humidityMedia));
+            }
+            
+            const timestamp = record.timestamp || record.recorded_at ? (isNaN(record.timestamp || record.recorded_at) ? new Date(record.timestamp || record.recorded_at).getTime() : parseInt(record.timestamp || record.recorded_at)) : Date.now();
 
             const sensorData = {
                 temperature: temperature,
@@ -66,8 +86,20 @@ class ReplayPublisher {
                 sent_at: Date.now()
             };
 
+            // Map Dataset Actuator logic for visualization
+            if (record.fan_intake_pwm !== undefined) sensorData.fan_intake_pwm = parseInt(record.fan_intake_pwm);
+            if (record.fan_exhaust_pwm !== undefined) sensorData.fan_exhaust_pwm = parseInt(record.fan_exhaust_pwm);
+            if (record.heater_status !== undefined) sensorData.heater_status = record.heater_status.toLowerCase() === 'true' || record.heater_status === '1';
+
             if (!offlineMode && this.client) {
-                this.client.publish(this.topic, JSON.stringify(sensorData));
+                if (config.useJitter !== false) {
+                    const mqttDelay = Math.floor(Math.random() * (100 - 20 + 1) + 20); // 20-100ms
+                    setTimeout(() => {
+                        this.client.publish(this.topic, JSON.stringify(sensorData));
+                    }, mqttDelay);
+                } else {
+                    this.client.publish(this.topic, JSON.stringify(sensorData));
+                }
             }
 
             // Simulate CV based on box

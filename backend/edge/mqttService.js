@@ -9,6 +9,8 @@ const experimentService = require('../services/experimentService');
 const metricsService = require('../services/metricsService');
 const automationService = require('../services/automationService');
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 function initMQTT(io, pgPool) {
     mqttClient.on("connect", () => {
         console.log("✅ Backend (Edge Layer) terhubung ke MQTT Broker");
@@ -90,6 +92,11 @@ function initMQTT(io, pgPool) {
                 queueService.enqueueSync('sensor_data', sensorData.id, 'INSERT', sensorData);
             });
 
+            // Simulate SQLite write delay (1-10ms)
+            if (source === "dataset") {
+                await sleep(Math.floor(Math.random() * 10) + 1);
+            }
+
             // Execute transaction
             insertTransaction(insertData);
 
@@ -98,7 +105,22 @@ function initMQTT(io, pgPool) {
             // Phase 3: Evaluate Automation (Thresholds, Actuators, Notifications)
             const floorLevel = data.lantai || data.room_number || 1; 
             const automationResult = await automationService.evaluate(insertData, parseInt(floorLevel));
-            const actuators = automationResult.actuators;
+            let actuators = automationResult.actuators;
+            
+            // Bypass if Dataset provided empirical actuator hardware states
+            if (data.source === "dataset") {
+                if (data.fan_intake_pwm !== undefined || data.fan_exhaust_pwm !== undefined) {
+                    actuators.fan_in = data.fan_intake_pwm > 0 || data.fan_exhaust_pwm > 0;
+                }
+                if (data.heater_status !== undefined) {
+                    actuators.heater = data.heater_status;
+                }
+            }
+
+            // Simulate WebSocket emit delay (5-50ms)
+            if (source === "dataset") {
+                await sleep(Math.floor(Math.random() * 46) + 5);
+            }
 
             io.emit("telemetry_update", {
                 box_id: parseInt(data.lantai || data.room_number || boxId),

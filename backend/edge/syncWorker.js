@@ -100,8 +100,19 @@ class SyncWorker {
             const simConfig = networkSimulatorService.getConfig();
             
             // Simulate packet delay
-            if (simConfig.packetDelay > 0) {
-                await new Promise(r => setTimeout(r, simConfig.packetDelay));
+            let delay = simConfig.packetDelay || 0;
+            
+            try {
+                const replayManager = require('../replay/replayManager');
+                if (replayManager && replayManager.engine) {
+                    delay += Math.floor(Math.random() * (300 - 50 + 1) + 50); // 50-300ms
+                }
+            } catch (e) {
+                // Ignore if replayManager not available
+            }
+
+            if (delay > 0) {
+                await new Promise(r => setTimeout(r, delay));
             }
 
             // Simulate packet loss

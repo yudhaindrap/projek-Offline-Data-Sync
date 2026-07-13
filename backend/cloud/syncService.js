@@ -15,8 +15,13 @@ class SyncService {
                     accepted INT,
                     duplicates INT,
                     failed INT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    sync_duration_ms INT DEFAULT 0
                 );
+            `);
+            // Seamlessly upgrade existing table if it was created before this phase
+            await this.db.query(`
+                ALTER TABLE sync_logs ADD COLUMN IF NOT EXISTS sync_duration_ms INT DEFAULT 0;
             `);
         } catch (error) {
             console.error("Failed to initialize sync_logs table:", error);
@@ -32,6 +37,7 @@ class SyncService {
         let accepted = 0;
         let duplicates = 0;
         let failed = 0;
+        const startTime = Date.now();
 
         try {
             await client.query('BEGIN');
@@ -82,11 +88,13 @@ class SyncService {
             // For resilience, we commit what succeeded.
             await client.query('COMMIT');
 
+            const durationMs = Date.now() - startTime;
+
             // Log the sync attempt
             await this.db.query(`
-                INSERT INTO sync_logs (id, batch_size, accepted, duplicates, failed)
-                VALUES ($1, $2, $3, $4, $5)
-            `, [crypto.randomUUID(), edgeData.length, accepted, duplicates, failed]);
+                INSERT INTO sync_logs (id, batch_size, accepted, duplicates, failed, sync_duration_ms)
+                VALUES ($1, $2, $3, $4, $5, $6)
+            `, [crypto.randomUUID(), edgeData.length, accepted, duplicates, failed, durationMs]);
 
             return { accepted, duplicates, failed };
 
@@ -98,10 +106,12 @@ class SyncService {
             accepted = 0;
             duplicates = 0;
             
+            const durationMs = Date.now() - startTime;
+
             await this.db.query(`
-                INSERT INTO sync_logs (id, batch_size, accepted, duplicates, failed)
-                VALUES ($1, $2, $3, $4, $5)
-            `, [crypto.randomUUID(), edgeData.length, accepted, duplicates, failed]);
+                INSERT INTO sync_logs (id, batch_size, accepted, duplicates, failed, sync_duration_ms)
+                VALUES ($1, $2, $3, $4, $5, $6)
+            `, [crypto.randomUUID(), edgeData.length, accepted, duplicates, failed, durationMs]);
 
             throw error; // Rethrow to inform controller of 500 error
         } finally {

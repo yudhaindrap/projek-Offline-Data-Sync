@@ -4,6 +4,7 @@ class QueueRepository {
     constructor(db) {
         this.db = db;
         this.maxQueue = 0;
+        this.totalGenerated = 0;
     }
 
     addQueueItem(id, entityName, entityId, operation, payload) {
@@ -14,6 +15,8 @@ class QueueRepository {
         
         stmt.run(id, entityName, entityId, operation, payload);
         
+        this.totalGenerated++;
+
         // Update maxQueue asynchronously or lazily
         const currentSize = this.db.prepare(`SELECT COUNT(*) as count FROM sync_queue`).get().count;
         this.maxQueue = Math.max(this.maxQueue, currentSize);
@@ -73,7 +76,8 @@ class QueueRepository {
             pending: pending,
             retries: retries,
             oldestPendingRecord: oldest,
-            maxQueue: this.maxQueue
+            maxQueue: this.maxQueue,
+            totalGenerated: this.totalGenerated
         };
     }
 }

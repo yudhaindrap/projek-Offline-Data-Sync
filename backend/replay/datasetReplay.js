@@ -8,7 +8,7 @@ class DatasetReplay extends EventEmitter {
         super();
         this.datasetId = datasetId;
         this.speed = speed;
-        this.filePath = path.join(__dirname, '../research/datasets', `${datasetId}.csv`);
+        this.filePath = path.join(__dirname, '../research/datasets/raw', `${datasetId}.csv`);
         
         this.state = 'idle'; // idle, running, paused, stopped, finished
         this.rl = null;
@@ -16,6 +16,7 @@ class DatasetReplay extends EventEmitter {
         this.currentRecordCount = 0;
         this.lastRecordTimestamp = null;
         this.nextTimeoutId = null;
+        this.delimiter = ',';
         
         this.shouldStop = false;
         this.isPaused = false;
@@ -54,12 +55,15 @@ class DatasetReplay extends EventEmitter {
                 if (!line.trim()) continue;
 
                 if (isFirst) {
-                    this.headers = line.split(',').map(h => h.trim());
+                    if (line.includes(';')) {
+                        this.delimiter = ';';
+                    }
+                    this.headers = line.split(this.delimiter).map(h => h.trim());
                     isFirst = false;
                     continue;
                 }
 
-                const parts = line.split(',');
+                const parts = line.split(this.delimiter);
                 const record = {};
                 this.headers.forEach((h, i) => {
                     record[h] = parts[i] ? parts[i].trim() : null;

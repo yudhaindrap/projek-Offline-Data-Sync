@@ -127,4 +127,114 @@ router.get('/system-status', async (req, res) => {
     }
 });
 
+// Reset Experiment API
+router.post('/reset', async (req, res) => {
+    try {
+        const resetService = require('../services/resetService');
+        const result = await resetService.resetExperimentData();
+        res.status(200).json(result);
+    } catch (err) {
+        console.error("Error resetting experiment data:", err);
+        res.status(500).json({ error: err.message || "Failed to reset experiment data" });
+    }
+});
+
+// Helper function to fetch and format sync logs
+async function fetchSyncLogsExportData() {
+    const pool = require('../db');
+    const { rows } = await pool.query(`SELECT * FROM sync_logs ORDER BY created_at ASC`);
+    
+    // Map to the requested verbose export schema
+    return rows.map(row => ({
+        sync_id: row.id || "",
+        batch_id: "",
+        entity_type: "",
+        entity_id: "",
+        tenant_id: "",
+        box_id: "",
+        operation: "",
+        status: "",
+        attempt_number: "",
+        retry_count: "",
+        queue_status: "",
+        created_at: row.created_at ? new Date(row.created_at).toISOString() : "",
+        queued_at: "",
+        sync_started_at: "",
+        sync_finished_at: "",
+        sync_duration_ms: row.sync_duration_ms !== undefined ? row.sync_duration_ms : "",
+        payload_size_bytes: "",
+        records_sent: row.batch_size || 0,
+        records_accepted: row.accepted || 0,
+        records_failed: row.failed || 0,
+        duplicates: row.duplicates || 0,
+        http_status: "",
+        response_message: "",
+        error_message: "",
+        network_mode: "",
+        connectivity_status: "",
+        device_id: "",
+        worker_name: "",
+        experiment_id: "",
+        dataset_name: "",
+        mqtt_latency_ms: "",
+        websocket_latency_ms: "",
+        synchronization_source: "",
+        created_by: ""
+    }));
+}
+
+// Export Sync Logs JSON
+router.get('/export/sync/json', async (req, res) => {
+    try {
+        const syncLogs = await fetchSyncLogsExportData();
+        const exportData = {
+            exported_at: new Date().toISOString(),
+            total_records: syncLogs.length,
+            experiment: "",
+            dataset: "",
+            sync_logs: syncLogs
+        };
+        
+        res.setHeader('Content-disposition', `attachment; filename=sync_logs_${Date.now()}.json`);
+        res.setHeader('Content-type', 'application/json');
+        res.status(200).send(JSON.stringify(exportData, null, 4));
+    } catch (err) {
+        console.error("Error exporting sync logs to JSON:", err);
+        res.status(500).json({ error: "Failed to export JSON" });
+    }
+});
+
+// Export Sync Logs CSV
+router.get('/export/sync/csv', async (req, res) => {
+    try {
+        const syncLogs = await fetchSyncLogsExportData();
+        
+        if (syncLogs.length === 0) {
+            return res.status(200).send("No data available");
+        }
+
+        const headers = Object.keys(syncLogs[0]);
+        let csvContent = headers.join(',') + '\n';
+        
+        syncLogs.forEach(log => {
+            const row = headers.map(header => {
+                let cell = log[header] !== null && log[header] !== undefined ? String(log[header]) : '';
+                // Escape quotes and wrap in quotes if there's a comma or quote
+                if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
+                    cell = `"${cell.replace(/"/g, '""')}"`;
+                }
+                return cell;
+            });
+            csvContent += row.join(',') + '\n';
+        });
+
+        res.setHeader('Content-disposition', `attachment; filename=sync_logs_${Date.now()}.csv`);
+        res.setHeader('Content-type', 'text/csv; charset=utf-8');
+        res.status(200).send(csvContent);
+    } catch (err) {
+        console.error("Error exporting sync logs to CSV:", err);
+        res.status(500).json({ error: "Failed to export CSV" });
+    }
+});
+
 module.exports = router;
