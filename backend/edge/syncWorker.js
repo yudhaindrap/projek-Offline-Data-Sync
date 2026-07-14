@@ -3,6 +3,22 @@ const connectivityService = require('./connectivityService');
 const http = require('http');
 const networkSimulatorService = require('../services/networkSimulatorService');
 const metricsService = require('../services/metricsService');
+const os = require('os');
+
+// Helper for CPU calculation
+function getCpuUsage() {
+    const cpus = os.cpus();
+    let user = 0, nice = 0, sys = 0, idle = 0, irq = 0;
+    for (let cpu of cpus) {
+        user += cpu.times.user;
+        nice += cpu.times.nice;
+        sys += cpu.times.sys;
+        idle += cpu.times.idle;
+        irq += cpu.times.irq;
+    }
+    const total = user + nice + sys + idle + irq;
+    return Math.round(((total - idle) / total) * 100);
+}
 
 class SyncWorker {
     constructor() {
@@ -35,12 +51,26 @@ class SyncWorker {
         if (this.isRunning) return;
 
         // Only run when ONLINE physically, or simulated
-        if (connectivityService.getStatus().status !== 'ONLINE') {
-            return;
-        }
-
-        const simConfig = networkSimulatorService.getConfig();
-        if (simConfig.status === 'offline') {
+        const isOffline = connectivityService.getStatus().status !== 'ONLINE' || networkSimulatorService.getConfig().status === 'offline';
+        
+        if (isOffline) {
+            // Baseline 1: No Offline Sync Simulation
+            if (process.env.ENABLE_OFFLINE_SYNC === 'false') {
+                const batchToDrop = queueRepository.getBatch(100);
+                if (batchToDrop.length > 0) {
+                    batchToDrop.forEach(item => {
+                        try {
+                            // Delete from queue but do NOT mark as synced in source table to simulate data loss
+                            const deleteStmt = queueRepository.db.prepare(`DELETE FROM sync_queue WHERE id = ?`);
+                            deleteStmt.run(item.id);
+                        } catch (err) {
+                            console.error(`❌ Error dropping queue item ${item.id}:`, err);
+                        }
+                    });
+                    this.dataLossCount += batchToDrop.length;
+                    console.log(`⚠️ Baseline 1 active (ENABLE_OFFLINE_SYNC=false). Dropped ${batchToDrop.length} items during offline period (Simulated Data Loss).`);
+                }
+            }
             return;
         }
 
@@ -55,9 +85,14 @@ class SyncWorker {
 
             console.log(`📤 SyncWorker: Found ${batch.length} items to sync.`);
             const startTime = Date.now();
+            const startCpu = getCpuUsage();
+            const startMem = process.memoryUsage().heapUsed;
+            
+            const payloadString = JSON.stringify({ edgeData: batch });
+            const payloadSizeBytes = Buffer.byteLength(payloadString);
 
             // Send payload to Cloud API
-            const success = await this.sendToCloud(batch);
+            const success = await this.sendToCloud(payloadString);
             
             const durationMs = Date.now() - startTime;
             this.totalSyncTimeMs += durationMs;
@@ -78,6 +113,14 @@ class SyncWorker {
                 metricsService.record('sync_duration_ms', durationMs);
                 const throughput = durationMs > 0 ? (batch.length / (durationMs / 1000)) : batch.length;
                 metricsService.record('sync_throughput_rps', throughput);
+                
+                // New Expanded Metrics
+                const endCpu = getCpuUsage();
+                const endMem = process.memoryUsage().heapUsed;
+                metricsService.record('sync_payload_size_bytes', payloadSizeBytes);
+                metricsService.record('edge_cpu_spike', Math.abs(endCpu - startCpu));
+                metricsService.record('edge_mem_spike', Math.abs((endMem - startMem) / 1024 / 1024)); // in MB
+
             } else {
                 this.failureCount += batch.length;
                 // Mark failed for indefinite retry
@@ -95,7 +138,7 @@ class SyncWorker {
         }
     }
 
-    sendToCloud(batch) {
+    sendToCloud(payloadString) {
         return new Promise(async (resolve) => {
             const simConfig = networkSimulatorService.getConfig();
             
@@ -121,7 +164,7 @@ class SyncWorker {
                 if (drop) return resolve(false);
             }
 
-            const payload = JSON.stringify({ edgeData: batch });
+            const payload = payloadString;
             const port = process.env.PORT || 5000;
             
             const options = {

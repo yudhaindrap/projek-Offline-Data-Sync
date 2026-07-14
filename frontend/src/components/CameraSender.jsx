@@ -46,7 +46,7 @@ export default function CameraSender() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error("Akses kamera diblokir oleh browser. Anda harus mengakses ini melalui HTTPS atau localhost. (Solusi cepat di HP Android: buka chrome://flags/#unsafely-treat-insecure-origin-as-secure lalu tambahkan http://192.168.1.19:3000 dan Enable)");
       }
-      
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'environment',
@@ -76,7 +76,7 @@ export default function CameraSender() {
 
       const offer = await peerConnection.current.createOffer();
       await peerConnection.current.setLocalDescription(offer);
-      
+
       // Kirim offer dan tentukan Room tempat kamera ini berada
       socket.current.emit("webrtc-offer", {
         sdp: offer.sdp,

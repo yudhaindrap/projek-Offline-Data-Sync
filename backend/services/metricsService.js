@@ -15,6 +15,9 @@ class MetricsService {
             sync_duration_ms: [],
             sync_throughput_rps: [],
             pg_insert_time_ms: [],
+            sync_payload_size_bytes: [],
+            edge_cpu_spike: [],
+            edge_mem_spike: [],
             mqtt_packets: [],
             ws_packets: [],
             webrtc_packets: []
@@ -196,7 +199,10 @@ class MetricsService {
                 total_failed: syncStats.totalFailed,
                 data_loss: syncStats.dataLoss,
                 queue_size: queueStats.total || 0,
-                pending_queue: queueStats.pending || 0
+                pending_queue: queueStats.pending || 0,
+                avg_payload_size_bytes: this.getAverage('sync_payload_size_bytes'),
+                avg_cpu_spike_pct: this.getAverage('edge_cpu_spike'),
+                avg_mem_spike_mb: this.getAverage('edge_mem_spike')
             };
 
             await pool.query(`

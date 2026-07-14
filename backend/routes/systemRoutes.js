@@ -100,41 +100,33 @@ router.get('/system/sync-metrics', async (req, res) => {
 // Cloud Sync Endpoint
 router.post('/sync', syncController.handleSyncRequest);
 
-// POST /api/metrics/latency
-router.post('/metrics/latency', async (req, res) => {
-    // Jalankan secara asynchronous tanpa menge-block thread UI
-    const { type, latency_ms } = req.body;
+// --- KODE BARU: ENDPOINT REST API WEBSOCKET LATENCY ---
+router.post('/metrics/websocket-latency', async (req, res) => {
+    const { latency_ms } = req.body;
 
-    // Validasi sederhana tipe data
-    if (!type || typeof latency_ms !== 'number') {
-        return res.status(400).json({ error: 'Format payload tidak valid' });
+    if (typeof latency_ms !== 'number') {
+        return res.status(400).json({ error: 'Payload tidak valid' });
     }
 
     try {
-        const logId = crypto.randomUUID();
+        const metricsService = require('../services/metricsService');
+        metricsService.record('ws_latency_ms', latency_ms);
+        
+        metricsService.buffers.ws_packets.push({
+            server_send_at: Date.now() - latency_ms,
+            browser_receive_at: Date.now(),
+            browser_render_at: Date.now(),
+            broadcast_latency_ms: latency_ms,
+            render_latency_ms: 0,
+            e2e_latency_ms: latency_ms
+        });
 
-        if (type === 'websocket') {
-            await pool.query(
-                `INSERT INTO websocket_latency_logs (id, e2e_latency_ms, recorded_at) 
-                 VALUES ($1, $2, NOW())`,
-                [logId, Math.round(latency_ms)]
-            );
-        } else if (type === 'webrtc') {
-            await pool.query(
-                `INSERT INTO webrtc_latency_logs (id, latency_ms, recorded_at) 
-                 VALUES ($1, $2, NOW())`,
-                [logId, Math.round(latency_ms)]
-            );
-        } else {
-            return res.status(400).json({ error: 'Tipe protokol tidak didukung' });
-        }
-
-        // Return secara instan
-        return res.status(200).json({ message: 'Metrik latensi berhasil disimpan' });
+        return res.status(200).json({ message: 'OK' });
     } catch (err) {
-        console.error('Database Error (Latency Metrics):', err.message);
-        return res.status(500).json({ error: 'Terjadi kesalahan sistem' });
+        console.error('Insert WS Latency Error:', err.message);
+        return res.status(500).json({ error: 'Internal Error' });
     }
 });
+// ------------------------------------------------------
 
 module.exports = router;

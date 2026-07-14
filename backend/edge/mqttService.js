@@ -8,6 +8,8 @@ const queueService = require('./queueService');
 const experimentService = require('../services/experimentService');
 const metricsService = require('../services/metricsService');
 const automationService = require('../services/automationService');
+const connectivityService = require('./connectivityService');
+const networkSimulatorService = require('../services/networkSimulatorService');
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -31,13 +33,12 @@ function initMQTT(io, pgPool) {
                 
                 // --- KODE MODIFIKASI: INSERT LATENSI MQTT MURNI ---
                 try {
-                    const logId = crypto.randomUUID();
-                    const msgId = data.msg_id || crypto.randomUUID();
+                    const nodeId = data.node_id || 'unknown_node';
                     const pool = require('../db');
                     pool.query(
-                        `INSERT INTO mqtt_latency_logs (id, msg_id, latency_ms, recorded_at) VALUES ($1, $2, $3, NOW())`,
-                        [logId, msgId, latency]
-                    );
+                        `INSERT INTO mqtt_latency_logs (node_id, latency_ms, recorded_at) VALUES ($1, $2, NOW())`,
+                        [nodeId, latency]
+                    ).catch(err => console.error("❌ Gagal insert log MQTT:", err.message));
                 } catch (err) {
                     console.error("❌ Gagal insert log MQTT:", err.message);
                 }
@@ -110,8 +111,17 @@ function initMQTT(io, pgPool) {
                     sensorData.experiment_session_id
                 );
                 
-                // Enqueue the sync record
-                queueService.enqueueSync('sensor_data', sensorData.id, 'INSERT', sensorData);
+                // Baseline 1: Discard instead of enqueue if offline and ENABLE_OFFLINE_SYNC=false
+                const isOffline = connectivityService.getStatus().status !== 'ONLINE' || networkSimulatorService.getConfig().status === 'offline';
+                if (isOffline && process.env.ENABLE_OFFLINE_SYNC === 'false') {
+                    console.log(`⚠️ Baseline 1 active (ENABLE_OFFLINE_SYNC=false). Discarding payload instead of queuing.`);
+                    // Increment dataLossCount globally for metrics (since syncWorker won't see this item)
+                    const syncWorker = require('./syncWorker');
+                    syncWorker.dataLossCount++;
+                } else {
+                    // Enqueue the sync record
+                    queueService.enqueueSync('sensor_data', sensorData.id, 'INSERT', sensorData);
+                }
             });
 
             // Simulate SQLite write delay (1-10ms)

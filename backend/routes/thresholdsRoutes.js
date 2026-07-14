@@ -33,7 +33,7 @@ router.get('/:floor', verifyToken, async (req, res) => {
                 SELECT b.id
                 FROM boxes b
                 JOIN box_locations l ON b.id = l.box_id
-                WHERE l.floor_level = $1
+                WHERE l.room_number = $1
                 AND b.tenant_id = $2
                 LIMIT 1
                 `,

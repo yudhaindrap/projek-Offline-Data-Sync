@@ -22,10 +22,10 @@ export function useWebSocketLatency(socket) {
                 const oneWayLatency = rtt / 2;
                 
                 // Lempar hasil ke REST API secara asynchronous di background
-                fetch('/api/metrics/latency', {
+                fetch('/api/metrics/websocket-latency', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'websocket', latency_ms: oneWayLatency })
+                    body: JSON.stringify({ latency_ms: oneWayLatency })
                 }).catch(err => console.error("Gagal POST metrik WS:", err));
             }
         };

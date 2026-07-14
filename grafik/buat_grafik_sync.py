@@ -3,60 +3,69 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-# 1. Baca data log CSV
-# Pastikan nama file sesuai dengan yang Anda miliki
+# 1. Konfigurasi Font Standar IEEE (Times New Roman)
+plt.rcParams["font.family"] = "Times New Roman"
+plt.rcParams["font.size"] = 10 # Ukuran font standar yang tetap terbaca saat diperkecil
+
+# 2. Baca data log CSV
 csv_path = os.path.join(os.path.dirname(__file__), 'sync_logs_1783941511443.csv')
 df = pd.read_csv(csv_path)
 
-# Opsional: Kita ambil 100 siklus sinkronisasi terakhir agar grafik tidak terlalu berdesakan
-# Jika ingin menampilkan semua, hapus '.tail(100)'
+# Ambil 100 siklus terakhir
 df_plot = df.tail(100).reset_index(drop=True)
 
-# 2. Setup Figure dan Ukuran (Cocok untuk 1 kolom IEEE)
-fig, ax1 = plt.subplots(figsize=(10, 5))
-
-# Sumbu X adalah urutan siklus sinkronisasi (Batch)
+# 3. Setup Figure
+# Ukuran 7x4 inci dengan rasio yang bagus saat diskalakan ke 1 kolom IEEE (3.5 inci)
+fig, ax1 = plt.subplots(figsize=(7, 4))
 x = np.arange(len(df_plot))
 
-# 3. Plot Grafik Batang (Bar Chart) untuk Data yang Diterima vs Gagal di Sumbu Y Kiri
-# Warna hijau merepresentasikan sukses, warna merah untuk gagal/hilang
-ax1.bar(x, df_plot['records_accepted'], color='#2ca02c', label='Data Diterima (Sukses)', alpha=0.7)
-ax1.bar(x, df_plot['records_failed'], bottom=df_plot['records_accepted'], color='#d62728', label='Data Gagal/Loss', alpha=0.9)
+# 4. Bar Chart (Data Rekaman) - Dioptimalkan untuk cetak Hitam-Putih
+# Menggunakan warna abu-abu/putih dengan tepi hitam (edgecolor) dan arsiran (hatch)
+ax1.bar(x, df_plot['records_accepted'], color='#FFFFFF', edgecolor='black', 
+        hatch='///', label='Data Accepted', alpha=0.9)
+ax1.bar(x, df_plot['records_failed'], bottom=df_plot['records_accepted'], 
+        color='#A0A0A0', edgecolor='black', hatch='\\\\\\', label='Data Failed', alpha=0.9)
 
-ax1.set_xlabel('Siklus Sinkronisasi ke- (Batch)', fontsize=10, fontweight='bold')
-ax1.set_ylabel('Jumlah Rekaman Data (Baris)', fontsize=10, fontweight='bold', color='black')
-ax1.tick_params(axis='y', labelcolor='black')
+ax1.set_xlabel('Synchronization Cycle (Batch)', fontweight='bold')
+ax1.set_ylabel('Number of Records (Rows)', fontweight='bold')
+ax1.tick_params(axis='y')
 
-# Set batas atas Sumbu Y kiri (sedikit di atas batas maksimal records_sent)
+# Set batas atas Sumbu Y kiri
 max_records = df_plot['records_sent'].max() if not df_plot['records_sent'].empty else 100
 ax1.set_ylim(0, max(max_records + 20, 120))
 
-# 4. Plot Grafik Garis (Line Chart) untuk Durasi Latensi di Sumbu Y Kanan
+# 5. Line Chart (Latensi) - Sumbu Y Kanan
 ax2 = ax1.twinx()
-ax2.plot(x, df_plot['sync_duration_ms'], color='#1f77b4', marker='o', markersize=4, linewidth=1.5, label='Durasi Sinkronisasi (ms)')
-ax2.set_ylabel('Waktu Pemrosesan Cloud (ms)', fontsize=10, fontweight='bold', color='#1f77b4')
-ax2.tick_params(axis='y', labelcolor='#1f77b4')
+# Menggunakan garis hitam pekat dengan marker segitiga (^) yang menonjol
+ax2.plot(x, df_plot['sync_duration_ms'], color='black', marker='^', markersize=4, 
+         linestyle='-', linewidth=1.5, label='Sync Latency (ms)')
 
-# Set batas atas Sumbu Y kanan (dinamis mengikuti latensi tertinggi)
+ax2.set_ylabel('Cloud Processing Time (ms)', fontweight='bold')
+ax2.tick_params(axis='y')
+
+# Set batas atas Sumbu Y kanan
 max_duration = df_plot['sync_duration_ms'].max() if not df_plot['sync_duration_ms'].empty else 50
 ax2.set_ylim(0, max(max_duration + 10, 50))
 
-# 5. Kustomisasi Judul, Grid, dan Legenda ala Paper Akademik
-plt.title('Evaluasi Kinerja Sinkronisasi: Validasi Zero Data Loss & Latensi Transmisi', fontsize=12, fontweight='bold')
+# 6. Kustomisasi Legenda dan Grid
+# Hapus judul atas karena di IEEE judul gambar diletakkan di "Figure Caption" di bawah gambar, bukan di dalam grafik.
+# plt.title(...) -> Dihapus untuk standar IEEE.
 
-# Menggabungkan legenda dari ax1 dan ax2 ke dalam satu kotak
+# Gabung legenda
 lines_1, labels_1 = ax1.get_legend_handles_labels()
 lines_2, labels_2 = ax2.get_legend_handles_labels()
-ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc='upper left', framealpha=0.9, fontsize=9)
+ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc='upper left', framealpha=1.0, edgecolor='black', fontsize=9)
 
-# Menambahkan grid yang halus agar lebih mudah dibaca
-ax1.grid(True, linestyle='--', alpha=0.5)
+# Grid halus
+ax1.grid(True, linestyle=':', alpha=0.6, color='gray')
+
+# Gunakan tight_layout agar tidak ada ruang putih terbuang yang membuat font mengecil
 fig.tight_layout()
 
-# 6. Simpan output sebagai gambar beresolusi tinggi (300 DPI) untuk paper
-output_filename = 'Grafik_Kinerja_Sinkronisasi_IEEE.png'
-plt.savefig(output_filename, dpi=300)
-print(f"Grafik berhasil disimpan sebagai: {output_filename}")
+# 7. Ekspor Resolusi Tinggi untuk Publikasi
+output_filename = 'Fig_Sync_Performance_IEEE.png'
+# bbox_inches='tight' memastikan batas tepi gambar dipotong rapi
+plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+print(f"Grafik standar IEEE berhasil disimpan sebagai: {output_filename}")
 
-# Tampilkan grafik di layar
-plt.show()
+# plt.show()

@@ -3,7 +3,7 @@ const queueService = require('../edge/queueService');
 const experimentService = require('../services/experimentService');
 
 function simulateOfflineInsertion(tableName, data) {
-    if (!localDb.db) {
+    if (!localDb) {
         console.warn("[Simulator] Edge Database not initialized");
         return;
     }
@@ -25,15 +25,25 @@ function simulateOfflineInsertion(tableName, data) {
             data.experiment_session_id = activeExpId;
         }
 
-        const stmt = localDb.db.prepare(`
+        const stmt = localDb.prepare(`
             INSERT INTO ${tableName} (${finalColumns})
             VALUES (${finalPlaceholders})
         `);
         
         stmt.run(...values);
         
-        // Enqueue for sync
-        queueService.enqueueSync(tableName, data.id, 'INSERT', data);
+        const connectivityService = require('../edge/connectivityService');
+        const networkSimulatorService = require('../services/networkSimulatorService');
+        const isOffline = connectivityService.getStatus().status !== 'ONLINE' || networkSimulatorService.getConfig().status === 'offline';
+        
+        if (isOffline && process.env.ENABLE_OFFLINE_SYNC === 'false') {
+            console.log(`⚠️ Baseline 1 active. Discarding ${tableName} payload.`);
+            const syncWorker = require('../edge/syncWorker');
+            syncWorker.dataLossCount++;
+        } else {
+            // Enqueue for sync
+            queueService.enqueueSync(tableName, data.id, 'INSERT', data);
+        }
         
     } catch (err) {
         console.error(`[Simulator] Error inserting into ${tableName}:`, err.message);
