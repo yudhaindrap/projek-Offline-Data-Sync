@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Camera, PlayCircle, Bug } from 'lucide-react';
 import { io } from 'socket.io-client';
 
-const BACKEND_IP = "192.168.198.1"; // ⚠️ GANTI DENGAN IP LAPTOPMU
+const BACKEND_IP = "192.168.1.10"; // ⚠️ GANTI DENGAN IP LAPTOPMU
 
 export default function Growth() {
   const [selectedCamera, setSelectedCamera] = useState('Ruang 2');

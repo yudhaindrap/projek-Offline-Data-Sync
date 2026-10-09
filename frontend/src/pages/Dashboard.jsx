@@ -12,7 +12,7 @@ import {
     Zap,
 } from 'lucide-react';
 
-const socket = io('http://192.168.1.19:5000');
+const socket = io('http://192.168.1.10:5000');
 
 export default function Dashboard() {
     const [staticData, setStaticData] = useState({
@@ -33,7 +33,7 @@ export default function Dashboard() {
         // Step 1: Fetch owned box IDs first, then start polling
         const initBoxIds = async () => {
             try {
-                const res = await axios.get('http://192.168.1.19:5000/api/boxes', {
+                const res = await axios.get('http://192.168.1.10:5000/api/boxes', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 boxIdsRef.current = res.data.map(b => b.id);
@@ -45,7 +45,7 @@ export default function Dashboard() {
         };
 
         const fetchSummary = () => {
-            axios.get('http://192.168.1.19:5000/api/dashboard', {
+            axios.get('http://192.168.1.10:5000/api/dashboard', {
                 headers: { Authorization: `Bearer ${token}` }
             })
                 .then(res => {
@@ -61,7 +61,7 @@ export default function Dashboard() {
             const ids = boxIdsRef.current;
             if (ids.length === 0) return;
             const focusBoxId = ids[activeBoxIndexRef.current % ids.length];
-            axios.get(`http://192.168.1.19:5000/api/dashboard/latest/${focusBoxId}`, {
+            axios.get(`http://192.168.1.10:5000/api/dashboard/latest/${focusBoxId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
                 .then(res => {

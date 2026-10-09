@@ -5,7 +5,7 @@ import {
   UserPlus, Pencil, Trash2, X, ShieldCheck, User, CheckCircle, AlertCircle, Loader2, Users, RefreshCw
 } from 'lucide-react';
 
-const API = 'http://192.168.1.19:5000';
+const API = 'http://192.168.1.10:5000';
 
 function Toast({ toasts, removeToast }) {
   return (

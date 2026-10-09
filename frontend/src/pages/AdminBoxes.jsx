@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Box, Pencil, Trash2, X, CheckCircle, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 
-const API = 'http://192.168.1.19:5000';
+const API = 'http://192.168.1.10:5000';
 
 function Toast({ toasts, removeToast }) {
   return (

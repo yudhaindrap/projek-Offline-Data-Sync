@@ -25,13 +25,13 @@ export default function Monitoring() {
 
     const fetchData = async () => {
       try {
-        const boxRes = await axios.get('http://192.168.1.19:5000/api/monitoring/all', { headers: { Authorization: `Bearer ${token}` } });
+        const boxRes = await axios.get('http://192.168.1.10:5000/api/monitoring/all', { headers: { Authorization: `Bearer ${token}` } });
         const fetchedBoxes = boxRes.data;
         setBoxes(fetchedBoxes);
 
         if (fetchedBoxes && fetchedBoxes.length > 0) {
           const firstBoxId = fetchedBoxes[0].id;
-          const chartRes = await axios.get(`http://192.168.1.19:5000/api/charts/${firstBoxId}`, { headers: { Authorization: `Bearer ${token}` } });
+          const chartRes = await axios.get(`http://192.168.1.10:5000/api/charts/${firstBoxId}`, { headers: { Authorization: `Bearer ${token}` } });
           setChartData(chartRes.data);
         }
         setLoading(false);
@@ -56,7 +56,7 @@ export default function Monitoring() {
 
     try {
       // 1. Kirim perintah ke Backend (MQTT Bridge)
-      await axios.post('http://192.168.1.19:5000/api/actuators/toggle', {
+      await axios.post('http://192.168.1.10:5000/api/actuators/toggle', {
         box_id: boxId,
         actuator: actuatorName,
         state: newState

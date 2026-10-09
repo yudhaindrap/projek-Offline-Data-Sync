@@ -15,7 +15,7 @@ export default function Profile() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    axios.get('http://192.168.1.19:5000/api/profile', {
+    axios.get('http://192.168.1.10:5000/api/profile', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => setProfile({ ...profile, name: res.data.username, email: res.data.email }))
@@ -75,7 +75,7 @@ export default function Profile() {
     }
     const token = localStorage.getItem("token");
     try {
-      await axios.put('http://192.168.1.19:5000/api/profile', { name: profile.name }, {
+      await axios.put('http://192.168.1.10:5000/api/profile', { name: profile.name }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       showNotification('success', 'Informasi profil Anda berhasil diperbarui!');
@@ -104,7 +104,7 @@ export default function Profile() {
 
     const token = localStorage.getItem("token");
     try {
-      await axios.put('http://192.168.1.19:5000/api/profile/password', { currentPassword, newPassword }, {
+      await axios.put('http://192.168.1.10:5000/api/profile/password', { currentPassword, newPassword }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       showNotification('success', 'Kata sandi Anda sukses diperbarui!');

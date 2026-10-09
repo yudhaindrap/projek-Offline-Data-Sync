@@ -35,7 +35,7 @@ export default function Thresholds() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     axios
-      .get('http://192.168.1.19:5000/api/boxes', {
+      .get('http://192.168.1.10:5000/api/boxes', {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(res => {
@@ -51,14 +51,14 @@ export default function Thresholds() {
     const token = localStorage.getItem('token');
     try {
       const res = await axios.put(
-        `http://192.168.1.19:5000/api/boxes/${relocBoxId}/relocate`,
+        `http://192.168.1.10:5000/api/boxes/${relocBoxId}/relocate`,
         { room_number: relocFloor, slot_number: relocSlot },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       showRelocToast('success', res.data.message);
       setRelocSlot('');
       // Refresh box list to reflect new room_number
-      const updated = await axios.get('http://192.168.1.19:5000/api/boxes', {
+      const updated = await axios.get('http://192.168.1.10:5000/api/boxes', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBoxes(updated.data);
@@ -86,7 +86,7 @@ export default function Thresholds() {
 
     axios
       .get(
-        `http://192.168.1.19:5000/api/thresholds/${selectedFloor}`,
+        `http://192.168.1.10:5000/api/thresholds/${selectedFloor}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -109,7 +109,7 @@ export default function Thresholds() {
     try {
 
       await axios.post(
-        'http://192.168.1.19:5000/api/thresholds',
+        'http://192.168.1.10:5000/api/thresholds',
         {
           ...form,
           floorLevel: selectedFloor

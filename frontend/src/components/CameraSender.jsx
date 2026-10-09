@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useWebRTCLatency } from '../hooks/useLatencyMetrics';
 
-const BACKEND_IP = "192.168.198.1"; // ⚠️ GANTI DENGAN IP LAPTOPMU
+const BACKEND_IP = "192.168.1.10"; // ⚠️ GANTI DENGAN IP LAPTOPMU
 
 export default function CameraSender() {
   const localVideoRef = useRef(null);
@@ -44,7 +44,7 @@ export default function CameraSender() {
 
       // --- PERUBAHAN DISINI: CONFIG HD ---
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Akses kamera diblokir oleh browser. Anda harus mengakses ini melalui HTTPS atau localhost. (Solusi cepat di HP Android: buka chrome://flags/#unsafely-treat-insecure-origin-as-secure lalu tambahkan http://192.168.1.19:3000 dan Enable)");
+        throw new Error("Akses kamera diblokir oleh browser. Anda harus mengakses ini melalui HTTPS atau localhost. (Solusi cepat di HP Android: buka chrome://flags/#unsafely-treat-insecure-origin-as-secure lalu tambahkan http://192.168.1.10:3000 dan Enable)");
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({

@@ -17,7 +17,7 @@ export default function Prediction() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     const fetchPredictions = () => {
-      axios.get('http://192.168.1.19:5000/api/predictions/all', {
+      axios.get('http://192.168.1.10:5000/api/predictions/all', {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => {

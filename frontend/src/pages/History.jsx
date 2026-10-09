@@ -26,7 +26,7 @@ export default function HistoryPage() {
     const token = localStorage.getItem("token");
 
     const fetchLogs = () => {
-      axios.get('http://192.168.1.19:5000/api/history/extended', {
+      axios.get('http://192.168.1.10:5000/api/history/extended', {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => {
