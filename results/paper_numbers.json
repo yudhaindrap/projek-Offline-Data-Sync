@@ -1,0 +1,119 @@
+{
+    "S0_StratC": {
+        "recovery_rate_median": 98.51,
+        "recovery_rate_iqr": "97.59 - 98.84",
+        "sync_delay_median": 600.0,
+        "sync_delay_iqr": "600.0 - 600.0",
+        "batch_sync_duration_median": 27.12,
+        "batch_sync_duration_iqr": "25.99 - 28.38"
+    },
+    "S1_StratA": {
+        "recovery_rate_median": 98.6,
+        "recovery_rate_iqr": "86.55 - 100.0",
+        "sync_delay_median": 600.0,
+        "sync_delay_iqr": "581.72 - 600.0",
+        "batch_sync_duration_median": 29.65,
+        "batch_sync_duration_iqr": "29.23 - 31.37"
+    },
+    "S1_StratB": {
+        "recovery_rate_median": 99.44,
+        "recovery_rate_iqr": "98.88 - 100.0",
+        "sync_delay_median": 594.11,
+        "sync_delay_iqr": "583.93 - 600.0",
+        "batch_sync_duration_median": 31.54,
+        "batch_sync_duration_iqr": "31.36 - 39.81"
+    },
+    "S1_StratC": {
+        "recovery_rate_median": 100.0,
+        "recovery_rate_iqr": "97.22 - 100.0",
+        "sync_delay_median": 580.51,
+        "sync_delay_iqr": "579.47 - 600.0",
+        "batch_sync_duration_median": 46.28,
+        "batch_sync_duration_iqr": "30.11 - 54.64"
+    },
+    "S2_StratA": {
+        "recovery_rate_median": 98.87,
+        "recovery_rate_iqr": "98.76 - 99.88",
+        "sync_delay_median": 600.0,
+        "sync_delay_iqr": "600.0 - 600.0",
+        "batch_sync_duration_median": 31.12,
+        "batch_sync_duration_iqr": "30.41 - 32.93"
+    },
+    "S2_StratB": {
+        "recovery_rate_median": 99.38,
+        "recovery_rate_iqr": "97.94 - 100.0",
+        "sync_delay_median": 600.0,
+        "sync_delay_iqr": "552.21 - 600.0",
+        "batch_sync_duration_median": 33.47,
+        "batch_sync_duration_iqr": "32.52 - 33.92"
+    },
+    "S2_StratC": {
+        "recovery_rate_median": 99.35,
+        "recovery_rate_iqr": "98.8 - 99.97",
+        "sync_delay_median": 600.0,
+        "sync_delay_iqr": "563.93 - 600.0",
+        "batch_sync_duration_median": 26.36,
+        "batch_sync_duration_iqr": "26.07 - 27.41"
+    },
+    "S3_StratC": {
+        "recovery_rate_median": 99.22,
+        "recovery_rate_iqr": "98.87 - 99.92",
+        "sync_delay_median": 600.0,
+        "sync_delay_iqr": "519.38 - 600.0",
+        "batch_sync_duration_median": 28.16,
+        "batch_sync_duration_iqr": "27.7 - 28.66"
+    },
+    "S4_StratA": {
+        "recovery_rate_median": 87.34,
+        "recovery_rate_iqr": "85.98 - 88.62",
+        "sync_delay_median": 600.0,
+        "sync_delay_iqr": "600.0 - 600.0",
+        "batch_sync_duration_median": 41.22,
+        "batch_sync_duration_iqr": "39.97 - 43.71"
+    },
+    "S4_StratB": {
+        "recovery_rate_median": 87.49,
+        "recovery_rate_iqr": "83.61 - 88.74",
+        "sync_delay_median": 600.0,
+        "sync_delay_iqr": "600.0 - 600.0",
+        "batch_sync_duration_median": 39.63,
+        "batch_sync_duration_iqr": "39.45 - 39.82"
+    },
+    "S4_StratC": {
+        "recovery_rate_median": 91.47,
+        "recovery_rate_iqr": "91.3 - 92.74",
+        "sync_delay_median": 600.0,
+        "sync_delay_iqr": "600.0 - 600.0",
+        "batch_sync_duration_median": 33.09,
+        "batch_sync_duration_iqr": "33.01 - 33.2"
+    },
+    "Error_Handling": [
+        {
+            "test_case": "Mixed_Faults",
+            "injected_errors": 2,
+            "accepted": 0,
+            "rejected_unknown": 1,
+            "rejected_invalid": 1,
+            "queue_pending_after": 1,
+            "passed": false
+        },
+        {
+            "test_case": "Mixed_Faults",
+            "injected_errors": 2,
+            "accepted": 0,
+            "rejected_unknown": 1,
+            "rejected_invalid": 1,
+            "queue_pending_after": 1,
+            "passed": false
+        },
+        {
+            "test_case": "Mixed_Faults",
+            "injected_errors": 2,
+            "accepted": 0,
+            "rejected_unknown": 1,
+            "rejected_invalid": 1,
+            "queue_pending_after": 1,
+            "passed": false
+        }
+    ]
+}

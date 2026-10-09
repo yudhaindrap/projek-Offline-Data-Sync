@@ -1,0 +1,4 @@
+test_case,injected_errors,accepted,rejected_unknown,rejected_invalid,queue_pending_after,passed
+Mixed_Faults,2,0,1,1,1,false
+Mixed_Faults,2,0,1,1,1,false
+Mixed_Faults,2,0,1,1,1,false
